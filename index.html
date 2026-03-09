@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhatsCopyAI — WhatsApp Product Copy Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #F7F4EE; --card: #fff; --green: #1DAA61; --green-dark: #128C7E;
+      --green-pale: #F0FBF4; --ink: #1A1A1A; --muted: #8A8A8A;
+      --border: #E8E4DC; --accent: #FF6B2B; --chat: #ECE5DD;
+    }
+    body { background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: var(--ink); min-height: 100vh; }
+    button { font-family: inherit; cursor: pointer; }
+    input, textarea, select { font-family: inherit; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* NAV */
+    nav { background: var(--card); border-bottom: 1px solid var(--border); padding: 14px 32px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-icon { width: 36px; height: 36px; background: var(--green); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .logo-text { font-weight: 800; font-size: 18px; color: var(--ink); }
+    .logo-text span { color: var(--green); }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .badge { background: var(--green-pale); color: var(--green); font-size: 12px; font-weight: 600; padding: 5px 14px; border-radius: 99px; }
+    .btn-primary { background: var(--green); color: #fff; border: none; padding: 10px 22px; border-radius: 10px; font-weight: 700; font-size: 14px; transition: opacity .2s; }
+    .btn-primary:hover { opacity: .88; }
+
+    /* LANDING */
+    #landing { animation: fadeUp .6s ease both; }
+    .hero { max-width: 860px; margin: 0 auto; padding: 80px 24px 60px; text-align: center; }
+    .hero-tag { display: inline-block; background: #FFF3ED; border: 1px solid #FF6B2B30; border-radius: 99px; padding: 6px 18px; margin-bottom: 28px; font-size: 13px; color: var(--accent); font-weight: 600; }
+    .hero h1 { font-size: clamp(34px,6vw,58px); font-weight: 800; line-height: 1.1; margin-bottom: 20px; letter-spacing: -1.5px; }
+    .hero h1 span { color: var(--green); }
+    .hero p { font-size: 18px; color: var(--muted); max-width: 500px; margin: 0 auto 40px; line-height: 1.7; }
+    .hero-btn { background: var(--green); color: #fff; border: none; padding: 16px 44px; border-radius: 14px; font-weight: 800; font-size: 17px; box-shadow: 0 8px 30px #1DAA6150; transition: transform .2s; }
+    .hero-btn:hover { transform: translateY(-2px); }
+    .hero-sub { font-size: 13px; color: var(--muted); margin-top: 14px; }
+    .features { max-width: 860px; margin: 0 auto 80px; padding: 0 24px; display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 16px; }
+    .feature-card { background: var(--card); border-radius: 16px; padding: 22px 18px; border: 1px solid var(--border); }
+    .feature-card .icon { font-size: 28px; margin-bottom: 10px; }
+    .feature-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .feature-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* APP */
+    #app { display: none; }
+    .app-grid { max-width: 920px; margin: 0 auto; padding: 28px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media(max-width:680px) { .app-grid { grid-template-columns: 1fr; } }
+
+    /* FORM */
+    .form-card { background: var(--card); border-radius: 20px; padding: 28px 24px; border: 1px solid var(--border); }
+    .form-card h2 { font-size: 18px; font-weight: 800; margin-bottom: 22px; }
+    .field { margin-bottom: 16px; }
+    .field label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 7px; }
+    .field input, .field textarea, .field select {
+      width: 100%; padding: 12px 14px; border-radius: 10px; font-size: 14px;
+      border: 1.5px solid var(--border); outline: none; color: var(--ink); background: #fff;
+      transition: border-color .2s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--green); }
+    .field textarea { resize: vertical; line-height: 1.6; }
+    .opt-label { font-size: 13px; font-weight: 400; color: var(--muted); }
+
+    /* LANG & TONE */
+    .lang-row { display: flex; gap: 8px; }
+    .lang-btn { flex: 1; padding: 10px 6px; border-radius: 10px; border: 1.5px solid var(--border); background: #fff; font-size: 13px; color: var(--muted); text-align: center; transition: all .15s; }
+    .lang-btn .flag { font-size: 18px; display: block; margin-bottom: 3px; }
+    .lang-btn.active { border-color: var(--green); background: var(--green-pale); color: var(--green-dark); font-weight: 700; }
+    .tone-btn { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1.5px solid var(--border); background: #fff; text-align: left; margin-bottom: 8px; transition: all .15s; font-size: 14px; }
+    .tone-btn.active { border-color: var(--green); background: var(--green-pale); }
+    .tone-btn .tone-desc { font-size: 12px; color: var(--muted); margin-left: 6px; }
+
+    /* GENERATE BTN */
+    .gen-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 16px; font-weight: 800; transition: all .2s; }
+    .gen-btn.ready { background: var(--green); color: #fff; box-shadow: 0 6px 24px #1DAA6140; }
+    .gen-btn.disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+    .error-msg { color: red; font-size: 13px; margin-top: 10px; text-align: center; }
+
+    /* OUTPUT */
+    .output-empty { background: var(--card); border-radius: 20px; padding: 40px 24px; border: 1px dashed var(--border); text-align: center; }
+    .output-empty .big-icon { font-size: 52px; margin-bottom: 16px; }
+    .output-empty h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .output-empty p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+    .output-loading { background: var(--card); border-radius: 20px; padding: 32px 24px; border: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 15px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 14px; }
+    .copies-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .copies-header h3 { font-size: 16px; font-weight: 800; }
+    .regen-btn { padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1.5px solid var(--green); background: transparent; color: var(--green); }
+
+    /* COPY CARD */
+    .copy-card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 14px; animation: fadeUp .4s ease both; }
+    .copy-card-header { padding: 12px 18px; background: var(--green-pale); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .copy-label { font-weight: 700; font-size: 14px; color: var(--green-dark); }
+    .copy-meta { display: flex; align-items: center; gap: 8px; }
+    .char-count { font-size: 11px; color: var(--muted); }
+    .copy-btn { padding: 6px 14px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; color: var(--muted); font-size: 12px; font-weight: 600; transition: all .2s; }
+    .copy-btn.copied { border-color: var(--green); background: var(--green-pale); color: var(--green); }
+    .copy-body { padding: 16px 18px; }
+
+    /* WHATSAPP BUBBLE */
+    .wa-chat { background: var(--chat); border-radius: 14px; padding: 14px 16px; }
+    .wa-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .wa-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--green); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .wa-name { font-size: 13px; font-weight: 700; }
+    .wa-status { font-size: 11px; color: var(--green); }
+    .wa-bubble { background: #fff; border-radius: 0 12px 12px 12px; padding: 12px 14px; box-shadow: 0 1px 4px rgba(0,0,0,.08); max-width: 85%; position: relative; }
+    .wa-bubble::before { content:''; position:absolute; top:0; left:-8px; width:0; height:0; border-top: 8px solid #fff; border-left: 8px solid transparent; }
+    .wa-text { font-size: 13px; line-height: 1.65; white-space: pre-wrap; }
+    .wa-time { font-size: 10px; color: var(--muted); text-align: right; margin-top: 6px; }
+
+    /* USAGE BAR */
+    .usage-banner { border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+    .usage-banner.ok { background: var(--green-pale); border: 1px solid #1DAA6140; }
+    .usage-banner.full { background: #FFF3ED; border: 1px solid #FF6B2B40; }
+    .usage-text { font-size: 13px; }
+    .upgrade-btn { padding: 6px 14px; border-radius: 8px; background: var(--accent); border: none; color: #fff; font-weight: 700; font-size: 12px; }
+
+    /* UPGRADE MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal { background: var(--card); border-radius: 20px; padding: 36px 32px; max-width: 400px; width: 100%; animation: fadeUp .3s ease both; }
+    .modal-icon { font-size: 44px; text-align: center; margin-bottom: 12px; }
+    .modal h2 { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 8px; }
+    .modal p { color: var(--muted); font-size: 14px; line-height: 1.6; text-align: center; margin-bottom: 20px; }
+    .plan-box { background: var(--green-pale); border: 2px solid var(--green); border-radius: 14px; padding: 20px 22px; margin-bottom: 20px; }
+    .plan-label { font-size: 11px; letter-spacing: 3px; color: var(--green); text-transform: uppercase; margin-bottom: 6px; }
+    .plan-price { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+    .plan-price span { font-size: 14px; font-weight: 400; color: var(--muted); }
+    .plan-feature { display: flex; gap: 8px; margin-top: 8px; font-size: 13px; }
+    .plan-feature .check { color: var(--green); }
+    .modal-cta { width: 100%; padding: 14px; border-radius: 12px; border: none; background: var(--green); color: #fff; font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+    .modal-skip { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 14px; }
+
+    /* USAGE NAV */
+    .usage-nav { display: flex; align-items: center; gap: 10px; }
+    .usage-bar-wrap { width: 72px; height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .usage-bar-fill { height: 100%; border-radius: 99px; transition: width .4s; }
+    .usage-nav-text { font-size: 12px; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="#" onclick="showLanding()">
+    <div class="logo-icon">💬</div>
+    <span class="logo-text">WhatsCopy<span>AI</span></span>
+  </a>
+  <div class="nav-right" id="nav-right">
+    <span class="badge">10 Free Copies/Month</span>
+    <button class="btn-primary" onclick="showApp()">Try Free →</button>
+  </div>
+</nav>
+
+<!-- LANDING -->
+<div id="landing">
+  <div class="hero">
+    <div class="hero-tag">🇮🇳 India's #1 WhatsApp Copy Generator</div>
+    <h1>Write Killer WhatsApp<br><span>Product Copies</span> in Seconds</h1>
+    <p>Stop wasting hours on product descriptions. AI writes 3 ready-to-send WhatsApp copies in English, Hindi, or Hinglish — instantly.</p>
+    <button class="hero-btn" onclick="showApp()">Generate Free Copy →</button>
+    <div class="hero-sub">No signup · 10 free copies/month · Hindi + Hinglish support</div>
+  </div>
+  <div class="features">
+    <div class="feature-card"><div class="icon">⚡</div><h3>3 Variations Instantly</h3><p>Get 3 unique copies every time — pick the best one</p></div>
+    <div class="feature-card"><div class="icon">🇮🇳</div><h3>Hindi & Hinglish</h3><p>Native language copies that actually feel natural</p></div>
+    <div class="feature-card"><div class="icon">📱</div><h3>WhatsApp Preview</h3><p>See exactly how it'll look before you send</p></div>
+    <div class="feature-card"><div class="icon">🎯</div><h3>3 Tones</h3><p>Urgent, Friendly, or Premium — you choose the vibe</p></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="app-grid">
+    <!-- FORM -->
+    <div class="form-card">
+      <h2>📝 Your Product Details</h2>
+
+      <div class="field">
+        <label>Product Name *</label>
+        <input type="text" id="productName" placeholder="e.g. Handmade Silk Kurta, iPhone 15 Case..." oninput="checkForm()" />
+      </div>
+      <div class="field">
+        <label>Category *</label>
+        <select id="category" onchange="checkForm()">
+          <option value="">Select a category…</option>
+          <option>👗 Fashion & Clothing</option>
+          <option>👟 Footwear</option>
+          <option>💄 Beauty & Skincare</option>
+          <option>📱 Electronics & Gadgets</option>
+          <option>🏠 Home Decor & Furniture</option>
+          <option>🍽️ Food & Snacks</option>
+          <option>💊 Health & Wellness</option>
+          <option>🎒 Bags & Accessories</option>
+          <option>🧸 Kids & Toys</option>
+          <option>📦 Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Key Features / Description *</label>
+        <textarea id="features" rows="3" placeholder="e.g. Pure cotton, handmade, 5 colors, free shipping, limited stock..." oninput="checkForm()"></textarea>
+      </div>
+      <div class="field">
+        <label>Price <span class="opt-label">(optional)</span></label>
+        <input type="text" id="price" placeholder="e.g. ₹499, ₹999 (was ₹1,499)..." />
+      </div>
+
+      <div class="field">
+        <label>Language</label>
+        <div class="lang-row">
+          <button class="lang-btn active" onclick="setLang('english',this)"><span class="flag">🇬🇧</span>English</button>
+          <button class="lang-btn" onclick="setLang('hindi',this)"><span class="flag">🇮🇳</span>Hindi</button>
+          <button class="lang-btn" onclick="setLang('hinglish',this)"><span class="flag">🤝</span>Hinglish</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Tone</label>
+        <button class="tone-btn active" onclick="setTone('urgent',this)">🔥 Urgent & Exciting <span class="tone-desc">FOMO, limited stock energy</span></button>
+        <button class="tone-btn" onclick="setTone('friendly',this)">😊 Casual & Friendly <span class="tone-desc">Like a friend recommending it</span></button>
+        <button class="tone-btn" onclick="setTone('premium',this)">✨ Premium & Elegant <span class="tone-desc">High-value, aspirational feel</span></button>
+      </div>
+
+      <button class="gen-btn disabled" id="genBtn" onclick="generate()">✨ Generate Now (10 left)</button>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <!-- OUTPUT -->
+    <div id="output">
+      <div class="output-empty">
+        <div class="big-icon">💬</div>
+        <h3>Your copies will appear here</h3>
+        <p>Fill in your product details on the left and hit Generate to get 3 WhatsApp-ready copies instantly.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- UPGRADE MODAL -->
+<div class="modal-overlay" id="upgradeModal" style="display:none" onclick="closeUpgrade()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-icon">🚀</div>
+    <h2>You've Hit the Free Limit!</h2>
+    <p>Upgrade to Pro for unlimited WhatsApp copies every month.</p>
+    <div class="plan-box">
+      <div class="plan-label">Pro Plan</div>
+      <div class="plan-price">₹199<span>/month</span></div>
+      <div class="plan-feature"><span class="check">✓</span> Unlimited copies</div>
+      <div class="plan-feature"><span class="check">✓</span> All 3 languages</div>
+      <div class="plan-feature"><span class="check">✓</span> All tones</div>
+      <div class="plan-feature"><span class="check">✓</span> Priority support</div>
+    </div>
+    <button class="modal-cta">Upgrade Now — ₹199/month</button>
+    <button class="modal-skip" onclick="closeUpgrade()">Maybe Later</button>
+  </div>
+</div>
+
+<script>
+  const FREE_LIMIT = 10;
+  let selectedLang = 'english';
+  let selectedTone = 'urgent';
+
+  function getUsage() {
+    try {
+      const d = JSON.parse(localStorage.getItem('wc_usage') || '{}');
+      const m = new Date().toISOString().slice(0,7);
+      return d.month === m ? (d.count || 0) : 0;
+    } catch { return 0; }
+  }
+  function saveUsage(n) {
+    try { localStorage.setItem('wc_usage', JSON.stringify({ month: new Date().toISOString().slice(0,7), count: n })); } catch {}
+  }
+
+  function showLanding() {
+    document.getElementById('landing').style.display = '';
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('nav-right').innerHTML = `<span class="badge">10 Free Copies/Month</span><button class="btn-primary" onclick="showApp()">Try Free →</button>`;
+  }
+
+  function showApp() {
+    document.getElementById('landing').style.display = 'none';
+    document.getElementById('app').style.display = '';
+    updateUsageNav();
+  }
+
+  function updateUsageNav() {
+    const used = getUsage();
+    const pct = Math.min((used / FREE_LIMIT) * 100, 100);
+    const color = used >= FREE_LIMIT ? '#FF6B2B' : '#1DAA61';
+    document.getElementById('nav-right').innerHTML = `
+      <div class="usage-nav">
+        <div class="usage-bar-wrap"><div class="usage-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        <span class="usage-nav-text" style="color:${color}">${used}/${FREE_LIMIT} free</span>
+      </div>
+      ${used >= FREE_LIMIT ? `<button class="btn-primary" style="background:#FF6B2B" onclick="openUpgrade()">Upgrade ₹199/mo</button>` : ''}
+    `;
+    const left = FREE_LIMIT - used;
+    const btn = document.getElementById('genBtn');
+    if (btn) btn.textContent = used >= FREE_LIMIT ? '🔒 Upgrade to Generate' : `✨ Generate Now (${left} left)`;
+  }
+
+  function setLang(lang, el) {
+    selectedLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+  function setTone(tone, el) {
+    selectedTone = tone;
+    document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function checkForm() {
+    const name = document.getElementById('productName').value.trim();
+    const cat = document.getElementById('category').value;
+    const feat = document.getElementById('features').value.trim();
+    const btn = document.getElementById('genBtn');
+    const ready = name.length > 1 && cat && feat.length > 5;
+    btn.className = 'gen-btn ' + (ready ? 'ready' : 'disabled');
+  }
+
+  function openUpgrade() { document.getElementById('upgradeModal').style.display = 'flex'; }
+  function closeUpgrade() { document.getElementById('upgradeModal').style.display = 'none'; }
+
+  async function generate() {
+    const used = getUsage();
+    if (used >= FREE_LIMIT) { openUpgrade(); return; }
+    const name = document.getElementById('productName').value.trim();
+    const cat = document.getElementById('category').value;
+    const feat = document.getElementById('features').value.trim();
+    const price = document.getElementById('price').value.trim();
+    if (!name || !cat || feat.length < 5) return;
+
+    document.getElementById('errorMsg').textContent = '';
+    document.getElementById('output').innerHTML = `<div class="output-loading"><div class="spinner"></div>✍️ AI is writing your copies…</div>`;
+
+    const langMap = { english:'English', hindi:'Hindi (Devanagari script)', hinglish:'Hinglish (mix of Hindi and English, Roman script)' };
+    const toneMap = { urgent:'urgent, exciting, FOMO-creating — emojis, limited stock language', friendly:'casual and friendly — like a trusted friend recommending', premium:'premium and elegant — sophisticated, aspirational' };
+
+    const prompt = `You are an expert WhatsApp product copywriter for Indian small businesses.
+Write 3 unique WhatsApp product description copies.
+Product: ${name}
+Category: ${cat}
+Features: ${feat}
+${price ? 'Price: ' + price : ''}
+Language: ${langMap[selectedLang]}
+Tone: ${toneMap[selectedTone]}
+Rules: 80-160 chars each, include emojis, genuinely different angles, end with buying CTA.
+Return ONLY valid JSON: {"copies":["copy1","copy2","copy3"]}`;
+
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:prompt}] })
+      });
+      const data = await res.json();
+      const raw = data.content?.[0]?.text || '';
+      const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+      const copies = parsed.copies || [];
+      const newUsed = used + 1;
+      saveUsage(newUsed);
+      updateUsageNav();
+      renderCopies(copies, newUsed);
+    } catch(e) {
+      document.getElementById('output').innerHTML = `<div class="output-loading" style="color:red">Something went wrong. Please try again.</div>`;
+    }
+  }
+
+  function renderCopies(copies, used) {
+    const labels = ['⚡ Variation A','💬 Variation B','🌟 Variation C'];
+    const now = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const cardsHtml = copies.map((copy,i) => `
+      <div class="copy-card" style="animation-delay:${i*100}ms">
+        <div class="copy-card-header">
+          <span class="copy-label">${labels[i]}</span>
+          <div class="copy-meta">
+            <span class="char-count">${copy.length} chars</span>
+            <button class="copy-btn" id="cbtn${i}" onclick="copyText('${encodeURIComponent(copy)}',${i})">📋 Copy</button>
+          </div>
+        </div>
+        <div class="copy-body">
+          <div class="wa-chat">
+            <div class="wa-header">
+              <div class="wa-avatar">🛍️</div>
+              <div><div class="wa-name">My Shop</div><div class="wa-status">online</div></div>
+            </div>
+            <div class="wa-bubble">
+              <div class="wa-text">${copy.replace(/</g,'&lt;')}</div>
+              <div class="wa-time">${now} ✓✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    const bannerHtml = used >= FREE_LIMIT
+      ? `<div class="usage-banner full"><span class="usage-text" style="color:#FF6B2B">🔒 Free limit reached — upgrade for unlimited.</span><button class="upgrade-btn" onclick="openUpgrade()">Upgrade</button></div>`
+      : `<div class="usage-banner ok"><span class="usage-text" style="color:#128C7E">✅ ${FREE_LIMIT - used} free copies remaining this month</span></div>`;
+
+    document.getElementById('output').innerHTML = `
+      <div class="copies-header">
+        <h3>🎉 3 Copies Ready to Send!</h3>
+        <button class="regen-btn" onclick="generate()">↻ Regenerate</button>
+      </div>
+      ${cardsHtml}
+      ${bannerHtml}
+    `;
+  }
+
+  function copyText(encoded, i) {
+    const text = decodeURIComponent(encoded);
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('cbtn'+i);
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(()=>{ btn.textContent='📋 Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // init
+  updateUsageNav();
+</script>
+</body>
+</html>
